@@ -10,28 +10,53 @@ import { Terminal } from './components/Terminal';
 type View = 'TERMINAL' | 'GENESIS' | 'NEURAL' | 'PROTOCOL' | 'CONSENSUS' | 'AGENTS' | 'EXPLORER' | 'COUNCIL' | 'AI_TERMINAL';
 
 function App() {
-  const [stats, setStats] = useState<NetworkStats | null>(null);
+  // CACHE FIX 1: Initialize state by checking localStorage first
+  const [stats, setStats] = useState<NetworkStats | null>(() => {
+    const saved = localStorage.getItem('nc_stats');
+    return saved ? JSON.parse(saved) : null;
+  });
+  
+  const [currentView, setCurrentView] = useState<View>(() => {
+    const saved = localStorage.getItem('nc_view');
+    return (saved as View) || 'TERMINAL';
+  });
+
+  const [messages, setMessages] = useState<Array<{ type: 'user' | 'system'; text: string }>>(() => {
+    const saved = localStorage.getItem('nc_messages');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [commands, setCommands] = useState<Command[]>([]);
-  const [currentView, setCurrentView] = useState<View>('TERMINAL');
-  const [messages, setMessages] = useState<Array<{ type: 'user' | 'system'; text: string }>>([]);
   const [terminalInput, setTerminalInput] = useState<string>('');
   const proposalsRef = useRef<HTMLDivElement>(null);
+
+  // CACHE FIX 2: Save to localStorage every time these variables change
+  useEffect(() => {
+    if (stats) localStorage.setItem('nc_stats', JSON.stringify(stats));
+  }, [stats]);
+
+  useEffect(() => {
+    localStorage.setItem('nc_view', currentView);
+  }, [currentView]);
+
+  useEffect(() => {
+    localStorage.setItem('nc_messages', JSON.stringify(messages));
+  }, [messages]);
 
   useEffect(() => {
     loadData();
   }, []);
 
-  // NEW: Live Blockchain Simulation Logic
+  // Live Blockchain Simulation Logic
   useEffect(() => {
-    // Simulates a new block being minted every 3.2 seconds
     const blockInterval = setInterval(() => {
       setStats(prevStats => {
         if (!prevStats) return prevStats;
         
-        // Slightly fluctuate TPS up and down to look authentic
-        const tpsFluctuation = Math.floor(Math.random() * 21) - 10; // Random number between -10 and 10
-        const newTps = Math.max(100, prevStats.tps + tpsFluctuation);
+        const tpsFluctuation = Math.floor(Math.random() * 21) - 10; 
+        // FIXED: Removed the comma in 3,226 so the math works correctly
+        const newTps = Math.max(3351, prevStats.tps + tpsFluctuation);
 
         return {
           ...prevStats,
@@ -42,16 +67,20 @@ function App() {
       });
     }, 3200); 
 
-    // Cleanup interval on unmount
     return () => clearInterval(blockInterval);
   }, []);
 
   async function loadData() {
-    const { data: statsData } = await supabase
-      .from('network_stats')
-      .select('*')
-      .maybeSingle();
+    // Only fetch starting stats from Supabase if we don't already have them in localStorage
+    if (!localStorage.getItem('nc_stats')) {
+      const { data: statsData } = await supabase
+        .from('network_stats')
+        .select('*')
+        .maybeSingle();
+      if (statsData) setStats(statsData);
+    }
 
+    // Always fetch proposals and commands to keep them fresh from the database
     const { data: proposalsData } = await supabase
       .from('proposals')
       .select('*')
@@ -62,7 +91,6 @@ function App() {
       .select('*')
       .order('command', { ascending: true });
 
-    if (statsData) setStats(statsData);
     if (proposalsData) setProposals(proposalsData);
     if (commandsData) setCommands(commandsData);
   }
@@ -110,6 +138,7 @@ function App() {
       setCurrentView('COUNCIL');
     } else if (baseCmd === '/clear' || baseCmd === 'clear') {
       setMessages([]);
+      localStorage.removeItem('nc_messages'); // Also clear the cached messages
       return;
     } else if (baseCmd === '/agents' || baseCmd === 'agents') {
       response = `ACTIVE AGENTS: ${stats?.active_agents} neural instances running | Roles: Validator, Architect, Oracle, Consensus Manager`;
