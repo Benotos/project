@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Cpu } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -51,10 +51,13 @@ export function Terminal({ initialInput }: TerminalProps) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            system_instruction: {
-              parts: {
-                text: systemPrompt
-              }
+            // FIXED: systemInstruction parts must be inside an array []
+            systemInstruction: {
+              parts: [
+                {
+                  text: systemPrompt
+                }
+              ]
             },
             contents: [
               {
@@ -83,7 +86,8 @@ export function Terminal({ initialInput }: TerminalProps) {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('API Error Response:', errorData);
-        throw new Error(`API Error ${response.status}: ${response.statusText}`);
+        // Better error logging so we know exactly what Gemini is complaining about if it fails again
+        return `API Error ${response.status}: ${errorData?.error?.message || response.statusText}`;
       }
 
       const data = await response.json();
@@ -96,11 +100,16 @@ export function Terminal({ initialInput }: TerminalProps) {
   }
 
   async function handleSendMessage(messageText?: string) {
+    if (loading) return; // FIXED: Prevents double-firing if clicked rapidly
+
     const text = messageText || input.trim();
     if (!text) return;
 
+    // Create a truly unique random ID for each message to prevent React rendering glitches
+    const generateId = () => Math.random().toString(36).substring(2, 9);
+
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: generateId(),
       text,
       sender: 'user',
       timestamp: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -113,7 +122,7 @@ export function Terminal({ initialInput }: TerminalProps) {
     const aiResponse = await callGeminiAPI(text);
 
     const neuralMessage: Message = {
-      id: (Date.now() + 1).toString(),
+      id: generateId(),
       text: aiResponse,
       sender: 'neural',
       timestamp: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -125,8 +134,18 @@ export function Terminal({ initialInput }: TerminalProps) {
 
   return (
     <div className="max-w-4xl mx-auto px-4 pt-20 pb-32">
-      <div className="bg-black/40 border-2 border-cyan-500/50 rounded-lg overflow-hidden flex flex-col h-[600px]">
-        <div className="bg-black/60 border-b border-cyan-500/30 px-4 py-3 flex items-center justify-between">
+      <div className="bg-black/40 border-2 border-cyan-500/50 rounded-lg overflow-hidden flex flex-col h-[600px] relative">
+        
+        {/* NEURAL AI Background Layer */}
+        <div className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center opacity-10 select-none">
+          <div className="flex flex-col items-center justify-center text-cyan-500 animate-pulse">
+            <Cpu className="w-32 h-32 md:w-48 md:h-48 mb-4 opacity-50" />
+            <span className="text-4xl md:text-6xl font-black tracking-widest opacity-30">NEURAL AI</span>
+          </div>
+        </div>
+
+        {/* Header */}
+        <div className="relative z-10 bg-black/60 border-b border-cyan-500/30 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
             <span className="text-cyan-400 font-mono text-sm font-semibold">NEURAL TERMINAL</span>
@@ -134,9 +153,10 @@ export function Terminal({ initialInput }: TerminalProps) {
           <span className="text-gray-400 font-mono text-xs">Interactive AI Interface</span>
         </div>
 
+        {/* Terminal Chat Area */}
         <div
           ref={terminalRef}
-          className="flex-1 overflow-y-auto p-4 space-y-3 bg-black/30 font-mono text-sm"
+          className="relative z-10 flex-1 overflow-y-auto p-4 space-y-3 bg-black/20 font-mono text-sm"
         >
           {messages.length === 0 && (
             <div className="text-gray-500 text-center py-8">
@@ -148,7 +168,7 @@ export function Terminal({ initialInput }: TerminalProps) {
           {messages.map(msg => (
             <div key={msg.id} className={`flex gap-2 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div
-                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg backdrop-blur-sm ${
                   msg.sender === 'user'
                     ? 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-300'
                     : 'bg-green-500/20 border border-green-500/50 text-green-300'
@@ -167,7 +187,7 @@ export function Terminal({ initialInput }: TerminalProps) {
 
           {loading && (
             <div className="flex gap-2 justify-start">
-              <div className="bg-green-500/20 border border-green-500/50 text-green-300 px-4 py-2 rounded-lg">
+              <div className="bg-green-500/20 border border-green-500/50 text-green-300 px-4 py-2 rounded-lg backdrop-blur-sm">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-xs">NEURAL</span>
                   <div className="flex gap-1">
@@ -183,7 +203,8 @@ export function Terminal({ initialInput }: TerminalProps) {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="bg-black/60 border-t border-cyan-500/30 p-4">
+        {/* Input Area */}
+        <div className="relative z-10 bg-black/80 border-t border-cyan-500/30 p-4">
           <div className="flex gap-2">
             <input
               type="text"
@@ -197,7 +218,7 @@ export function Terminal({ initialInput }: TerminalProps) {
             <button
               onClick={() => handleSendMessage()}
               disabled={loading || !input.trim()}
-              className="bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/30 disabled:opacity-50 disabled:hover:bg-cyan-500/20 rounded px-4 py-2 transition-colors flex items-center gap-2 font-mono text-sm"
+              className="bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/30 disabled:opacity-50 disabled:hover:bg-cyan-500/20 rounded px-4 py-2 transition-colors flex items-center gap-2 font-mono text-sm backdrop-blur-sm"
             >
               <Send className="w-4 h-4" />
               Send
