@@ -43,8 +43,9 @@ export function Terminal({ initialInput }: TerminalProps) {
     try {
       const systemPrompt = `You are NEURAL, an AI assistant for the NeuralChain blockchain. You help users understand the network, answer questions about governance proposals, and provide insights into the protocol. Keep responses concise, technical but accessible, and use appropriate emojis sparingly.`;
 
+      // FIXED: Switched the model endpoint to gemini-2.5-flash
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: {
@@ -72,7 +73,6 @@ export function Terminal({ initialInput }: TerminalProps) {
               maxOutputTokens: 1024,
               stopSequences: []
             },
-            // FIXED: Using the exact categories the API requires
             safetySettings: [
               {
                 category: 'HARM_CATEGORY_HARASSMENT',
