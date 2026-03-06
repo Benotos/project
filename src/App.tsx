@@ -22,6 +22,30 @@ function App() {
     loadData();
   }, []);
 
+  // NEW: Live Blockchain Simulation Logic
+  useEffect(() => {
+    // Simulates a new block being minted every 3.2 seconds
+    const blockInterval = setInterval(() => {
+      setStats(prevStats => {
+        if (!prevStats) return prevStats;
+        
+        // Slightly fluctuate TPS up and down to look authentic
+        const tpsFluctuation = Math.floor(Math.random() * 21) - 10; // Random number between -10 and 10
+        const newTps = Math.max(100, prevStats.tps + tpsFluctuation);
+
+        return {
+          ...prevStats,
+          chain_height: prevStats.chain_height + 1,
+          block_count: prevStats.block_count + 1,
+          tps: newTps
+        };
+      });
+    }, 3200); 
+
+    // Cleanup interval on unmount
+    return () => clearInterval(blockInterval);
+  }, []);
+
   async function loadData() {
     const { data: statsData } = await supabase
       .from('network_stats')
@@ -78,7 +102,7 @@ function App() {
       response = 'CONSENSUS STATUS: Active validators: 12 | Current epoch: 847 | Consensus participation: 98.7%';
       setCurrentView('CONSENSUS');
     } else if (baseCmd === '/status' || baseCmd === 'status') {
-      response = `SYSTEM STATUS: Chain ${stats?.chain_height} | Blocks ${stats?.block_count.toLocaleString()} | TPS ${stats?.tps} | All systems operational.`;
+      response = `SYSTEM STATUS: Chain ${stats?.chain_height} | Blocks ${stats?.block_count?.toLocaleString()} | TPS ${stats?.tps} | All systems operational.`;
     } else if (baseCmd === '/help' || baseCmd === 'help') {
       response = 'Available commands: /genesis, /neural, /protocol, /consensus, /council, /status, /agents, /block, /tx, /balance, /info, /clear';
     } else if (baseCmd === '/council' || baseCmd === 'council') {
