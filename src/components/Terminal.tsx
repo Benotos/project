@@ -51,7 +51,6 @@ export function Terminal({ initialInput }: TerminalProps) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            // FIXED: systemInstruction parts must be inside an array []
             systemInstruction: {
               parts: [
                 {
@@ -73,9 +72,22 @@ export function Terminal({ initialInput }: TerminalProps) {
               maxOutputTokens: 1024,
               stopSequences: []
             },
+            // FIXED: Using the exact categories the API requires
             safetySettings: [
               {
-                category: 'HARM_CATEGORY_UNSPECIFIED',
+                category: 'HARM_CATEGORY_HARASSMENT',
+                threshold: 'BLOCK_NONE'
+              },
+              {
+                category: 'HARM_CATEGORY_HATE_SPEECH',
+                threshold: 'BLOCK_NONE'
+              },
+              {
+                category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+                threshold: 'BLOCK_NONE'
+              },
+              {
+                category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
                 threshold: 'BLOCK_NONE'
               }
             ]
@@ -86,7 +98,6 @@ export function Terminal({ initialInput }: TerminalProps) {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('API Error Response:', errorData);
-        // Better error logging so we know exactly what Gemini is complaining about if it fails again
         return `API Error ${response.status}: ${errorData?.error?.message || response.statusText}`;
       }
 
@@ -100,12 +111,11 @@ export function Terminal({ initialInput }: TerminalProps) {
   }
 
   async function handleSendMessage(messageText?: string) {
-    if (loading) return; // FIXED: Prevents double-firing if clicked rapidly
+    if (loading) return; 
 
     const text = messageText || input.trim();
     if (!text) return;
 
-    // Create a truly unique random ID for each message to prevent React rendering glitches
     const generateId = () => Math.random().toString(36).substring(2, 9);
 
     const userMessage: Message = {
