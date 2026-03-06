@@ -10,7 +10,7 @@ import { Terminal } from './components/Terminal';
 type View = 'TERMINAL' | 'GENESIS' | 'NEURAL' | 'PROTOCOL' | 'CONSENSUS' | 'AGENTS' | 'EXPLORER' | 'COUNCIL' | 'AI_TERMINAL';
 
 function App() {
-  // CACHE FIX 1: Initialize state by checking localStorage first
+  // Cache States
   const [stats, setStats] = useState<NetworkStats | null>(() => {
     const saved = localStorage.getItem('nc_stats');
     return saved ? JSON.parse(saved) : null;
@@ -29,9 +29,12 @@ function App() {
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [commands, setCommands] = useState<Command[]>([]);
   const [terminalInput, setTerminalInput] = useState<string>('');
+  
+  // NEW: Live UTC Time State
+  const [currentTime, setCurrentTime] = useState<string>('');
   const proposalsRef = useRef<HTMLDivElement>(null);
 
-  // CACHE FIX 2: Save to localStorage every time these variables change
+  // Save to Cache on Update
   useEffect(() => {
     if (stats) localStorage.setItem('nc_stats', JSON.stringify(stats));
   }, [stats]);
@@ -48,15 +51,14 @@ function App() {
     loadData();
   }, []);
 
-  // Live Blockchain Simulation Logic
+  // Live Blockchain & Real-Time UTC Simulation
   useEffect(() => {
+    // 1. Live Block Height and TPS updates (Every 3.2 seconds)
     const blockInterval = setInterval(() => {
       setStats(prevStats => {
         if (!prevStats) return prevStats;
-        
         const tpsFluctuation = Math.floor(Math.random() * 21) - 10; 
-        // FIXED: Removed the comma in 3,226 so the math works correctly
-        const newTps = Math.max(3351, prevStats.tps + tpsFluctuation);
+        const newTps = Math.max(3226, prevStats.tps + tpsFluctuation);
 
         return {
           ...prevStats,
@@ -67,11 +69,24 @@ function App() {
       });
     }, 3200); 
 
-    return () => clearInterval(blockInterval);
+    // 2. NEW: Real-Time World UTC Clock (Updates every second)
+    const timeInterval = setInterval(() => {
+      const now = new Date();
+      // Formats the output to strictly look like "2026-03-06 14:30:05 UTC"
+      const formattedUTC = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+      setCurrentTime(formattedUTC);
+    }, 1000);
+
+    // Initial time set so it doesn't wait 1 second to appear
+    setCurrentTime(new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC');
+
+    return () => {
+      clearInterval(blockInterval);
+      clearInterval(timeInterval);
+    };
   }, []);
 
   async function loadData() {
-    // Only fetch starting stats from Supabase if we don't already have them in localStorage
     if (!localStorage.getItem('nc_stats')) {
       const { data: statsData } = await supabase
         .from('network_stats')
@@ -80,7 +95,6 @@ function App() {
       if (statsData) setStats(statsData);
     }
 
-    // Always fetch proposals and commands to keep them fresh from the database
     const { data: proposalsData } = await supabase
       .from('proposals')
       .select('*')
@@ -115,7 +129,7 @@ function App() {
     let response = '';
 
     if (baseCmd === '/genesis' || baseCmd === 'genesis') {
-      response = 'GENESIS OVERVIEW: NeuralChain initialized at block 0 on 2026-03-06. Total supply: 1B NEURAL tokens. Consensus: Neural Proof-of-Intelligence (NPoI).';
+      response = 'GENESIS OVERVIEW: NeuralChain initialized at block 0. Total supply: 1B NEURAL tokens. Consensus: Neural Proof-of-Intelligence (NPoI).';
       setCurrentView('GENESIS');
     } else if (baseCmd === '/neural' || baseCmd === 'neural') {
       response = 'NEURAL AI: Hello! I am the primary neural network instance managing NeuralChain. How can I assist you today?';
@@ -138,7 +152,7 @@ function App() {
       setCurrentView('COUNCIL');
     } else if (baseCmd === '/clear' || baseCmd === 'clear') {
       setMessages([]);
-      localStorage.removeItem('nc_messages'); // Also clear the cached messages
+      localStorage.removeItem('nc_messages'); 
       return;
     } else if (baseCmd === '/agents' || baseCmd === 'agents') {
       response = `ACTIVE AGENTS: ${stats?.active_agents} neural instances running | Roles: Validator, Architect, Oracle, Consensus Manager`;
@@ -179,7 +193,8 @@ function App() {
             <h2 className="text-3xl font-bold text-cyan-400 font-mono mb-6">GENESIS BLOCK</h2>
             <div className="bg-black/40 border-2 border-cyan-500/50 rounded-lg p-6 font-mono text-sm space-y-4">
               <p className="text-gray-300">Block Height: <span className="text-cyan-400">382765873</span></p>
-              <p className="text-gray-300">Timestamp: <span className="text-cyan-400">2026-03-06 00:00:00 UTC</span></p>
+              {/* FIXED: Live ticking UTC Time */}
+              <p className="text-gray-300">Live Network Time: <span className="text-cyan-400">{currentTime}</span></p>
               <p className="text-gray-300">Hash: <span className="text-cyan-400 text-xs">0x000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f</span></p>
               <p className="text-gray-300">Initial Supply: <span className="text-cyan-400">1,000,000,000 NEURAL</span></p>
               <p className="text-gray-300">Consensus Algorithm: <span className="text-cyan-400">Neural Proof-of-Intelligence (NPoI)</span></p>
