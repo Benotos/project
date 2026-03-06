@@ -180,95 +180,83 @@ export function LiveCouncil() {
       </div>
 
       <div className="space-y-4">
-        {mockDiscussions.map((discussion) => (
-          <div
-            key={discussion.id}
-            className="bg-gradient-to-br from-orange-950/20 via-black/40 to-black/40 border-2 border-orange-500/40 rounded-lg overflow-hidden"
-          >
-            <div className="bg-black/60 border-b border-orange-500/30 p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-3">
-                  <span className="px-2 py-1 bg-orange-500 text-black font-mono text-xs font-bold rounded">
-                    NIP-{discussion.nipNumber}
-                  </span>
-                  <span className="px-2 py-1 bg-gray-700/50 text-gray-300 font-mono text-xs font-bold rounded">
-                    {discussion.status}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-gray-400 font-mono">
-                  <Users className="w-3 h-3" />
-                  <span>{discussion.watching} watching</span>
-                </div>
-              </div>
-              <h3 className="text-lg font-bold text-orange-400 font-mono">
-                {discussion.title}
-              </h3>
-              <p className="text-xs text-gray-400 font-mono mt-1">
-                Should we implement a trustless bridge to Solana mainnet? This would enable NEURAL token liquidity on Solana DEXes and expand ecosystem reach.
-              </p>
-            </div>
+        {mockDiscussions.map((discussion) => {
+          const isExpanded = expandedDiscussion === discussion.id;
+          // FIXED: Only show the first message if collapsed, otherwise show all
+          const messagesToShow = isExpanded ? discussion.messages : [discussion.messages[0]];
 
-            <div className="p-4">
-              <div className="text-xs text-gray-500 font-mono mb-3 uppercase tracking-wider">
-                Council Members:
-              </div>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {Object.entries(agentColors).map(([role, colorClass]) => (
-                  <div key={role} className="flex items-center gap-1">
-                    <div className={`w-2 h-2 rounded-full border ${colorClass}`} />
-                    <span className={`text-xs font-mono ${agentTextColors[role as keyof typeof agentTextColors]}`}>
-                      {role}
+          return (
+            <div
+              key={discussion.id}
+              className="bg-gradient-to-br from-orange-950/20 via-black/40 to-black/40 border-2 border-orange-500/40 rounded-lg overflow-hidden"
+            >
+              <div className="bg-black/60 border-b border-orange-500/30 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <span className="px-2 py-1 bg-orange-500 text-black font-mono text-xs font-bold rounded">
+                      NIP-{discussion.nipNumber}
+                    </span>
+                    <span className="px-2 py-1 bg-gray-700/50 text-gray-300 font-mono text-xs font-bold rounded">
+                      {discussion.status}
                     </span>
                   </div>
-                ))}
-              </div>
-
-              <div className="space-y-3">
-                {discussion.messages.map((msg, idx) => (
-                  <div
-                    key={idx}
-                    className={`border-l-4 ${agentColors[msg.role as keyof typeof agentColors]} bg-black/40 p-4 rounded-r`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono font-bold">
-                          [<span className={agentTextColors[msg.role as keyof typeof agentTextColors]}>{msg.role.charAt(0)}</span>]
-                        </span>
-                        <span className={`font-mono text-sm font-semibold ${agentTextColors[msg.role as keyof typeof agentTextColors]}`}>
-                          {msg.agent}
-                        </span>
-                        <span className="text-xs text-gray-600 font-mono">
-                          {msg.role} / Transaction Validation & Security
-                        </span>
-                      </div>
-                      <span className="text-xs text-gray-500 font-mono">{msg.timestamp}</span>
-                    </div>
-                    <p className="text-sm text-gray-300 font-mono leading-relaxed whitespace-pre-line">
-                      {msg.message}
-                    </p>
+                  <div className="flex items-center gap-2 text-xs text-gray-400 font-mono">
+                    <Users className="w-3 h-3" />
+                    <span>{discussion.watching} watching</span>
                   </div>
-                ))}
+                </div>
+                <h3 className="text-lg font-bold text-orange-400 font-mono">
+                  {discussion.title}
+                </h3>
               </div>
 
-              {expandedDiscussion === discussion.id && (
-                <button
-                  onClick={() => setExpandedDiscussion(null)}
-                  className="mt-4 w-full py-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono rounded hover:bg-cyan-500/20 transition-colors"
-                >
-                  Collapse Discussion
-                </button>
-              )}
-              {expandedDiscussion !== discussion.id && (
-                <button
-                  onClick={() => setExpandedDiscussion(discussion.id)}
-                  className="mt-4 w-full py-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono rounded hover:bg-cyan-500/20 transition-colors"
-                >
-                  View Full Discussion
-                </button>
-              )}
+              <div className="p-4">
+                <div className="space-y-3">
+                  {messagesToShow.map((msg, idx) => (
+                    <div
+                      key={idx}
+                      className={`border-l-4 ${agentColors[msg.role as keyof typeof agentColors]} bg-black/40 p-4 rounded-r`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono font-bold">
+                            [<span className={agentTextColors[msg.role as keyof typeof agentTextColors]}>{msg.role.charAt(0)}</span>]
+                          </span>
+                          <span className={`font-mono text-sm font-semibold ${agentTextColors[msg.role as keyof typeof agentTextColors]}`}>
+                            {msg.agent}
+                          </span>
+                          <span className="text-xs text-gray-600 font-mono">
+                            {msg.role}
+                          </span>
+                        </div>
+                        <span className="text-xs text-gray-500 font-mono">{msg.timestamp}</span>
+                      </div>
+                      <p className="text-sm text-gray-300 font-mono leading-relaxed whitespace-pre-line">
+                        {msg.message}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {isExpanded ? (
+                  <button
+                    onClick={() => setExpandedDiscussion(null)}
+                    className="mt-4 w-full py-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono rounded hover:bg-cyan-500/20 transition-colors"
+                  >
+                    Collapse Discussion
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setExpandedDiscussion(discussion.id)}
+                    className="mt-4 w-full py-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono rounded hover:bg-cyan-500/20 transition-colors"
+                  >
+                    View Full Discussion ({discussion.messages.length - 1} more responses)
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Proposal } from '../lib/supabase';
-import { ChevronDown, ChevronUp, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { ChevronDown, ChevronUp, ThumbsUp, ThumbsDown, CheckCircle } from 'lucide-react';
 
 interface ProposalCardProps {
   proposal: Proposal;
@@ -8,7 +8,14 @@ interface ProposalCardProps {
 
 export function ProposalCard({ proposal }: ProposalCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const percentage = Math.round((proposal.votes_for / proposal.votes_total) * 100);
+  
+  // FIXED: Added local state to handle voting interactions visually
+  const [voted, setVoted] = useState<'none' | 'approve' | 'reject'>('none');
+  const [localVotesFor, setLocalVotesFor] = useState(proposal.votes_for);
+  const [localVotesTotal, setLocalVotesTotal] = useState(proposal.votes_total);
+
+  const percentage = localVotesTotal > 0 ? Math.round((localVotesFor / localVotesTotal) * 100) : 0;
+  
   const statusColors = {
     RATIFIED: 'bg-cyan-500',
     PENDING: 'bg-yellow-500',
@@ -19,6 +26,15 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
     PHILOSOPHICAL: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
     TECHNICAL: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
     GOVERNANCE: 'bg-green-500/20 text-green-300 border-green-500/30',
+  };
+
+  const handleVote = (type: 'approve' | 'reject') => {
+    if (voted !== 'none') return; // Prevent voting twice
+    setVoted(type);
+    setLocalVotesTotal(prev => prev + 1);
+    if (type === 'approve') {
+      setLocalVotesFor(prev => prev + 1);
+    }
   };
 
   return (
@@ -58,16 +74,30 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
             </p>
           </div>
 
-          <div className="flex gap-3">
-            <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-500/20 border border-green-500/50 text-green-400 rounded font-mono text-sm hover:bg-green-500/30 transition-colors">
-              <ThumbsUp className="w-4 h-4" />
-              Vote Approve
-            </button>
-            <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded font-mono text-sm hover:bg-red-500/30 transition-colors">
-              <ThumbsDown className="w-4 h-4" />
-              Vote Reject
-            </button>
-          </div>
+          {/* FIXED: Voting logic renders buttons if not voted, or a success message if already voted */}
+          {voted === 'none' ? (
+            <div className="flex gap-3">
+              <button 
+                onClick={() => handleVote('approve')}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-500/20 border border-green-500/50 text-green-400 rounded font-mono text-sm hover:bg-green-500/30 transition-colors"
+              >
+                <ThumbsUp className="w-4 h-4" />
+                Vote Approve
+              </button>
+              <button 
+                onClick={() => handleVote('reject')}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded font-mono text-sm hover:bg-red-500/30 transition-colors"
+              >
+                <ThumbsDown className="w-4 h-4" />
+                Vote Reject
+              </button>
+            </div>
+          ) : (
+            <div className={`flex items-center justify-center gap-2 px-4 py-3 rounded font-mono text-sm border ${voted === 'approve' ? 'bg-green-500/20 text-green-400 border-green-500/50' : 'bg-red-500/20 text-red-400 border-red-500/50'}`}>
+              <CheckCircle className="w-4 h-4" />
+              Vote Registered: {voted.toUpperCase()}
+            </div>
+          )}
         </div>
       )}
 
@@ -76,12 +106,9 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
           <span className="text-gray-400">
             Author: <span className="text-cyan-400">{proposal.author}</span>
           </span>
-          <span className="text-gray-400">
-            Category: <span className="text-cyan-400">{proposal.category}</span>
-          </span>
           <span className="text-gray-400 flex items-center gap-1">
             <ThumbsUp className="w-3 h-3" />
-            Votes: <span className="text-green-400">{proposal.votes_for}/{proposal.votes_total}</span>
+            Votes: <span className="text-green-400">{localVotesFor}/{localVotesTotal}</span>
             <span className="text-green-400 font-semibold ml-1">{percentage}% APPROVE</span>
           </span>
         </div>
