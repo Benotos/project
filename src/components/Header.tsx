@@ -1,6 +1,6 @@
 import { NetworkStats } from '../lib/supabase';
 
-type View = 'TERMINAL' | 'GENESIS' | 'NEURAL' | 'PROTOCOL' | 'CONSENSUS' | 'COUNCIL' | 'AGENTS' | 'EXPLORER';
+type View = 'TERMINAL' | 'GENESIS' | 'NEURAL' | 'PROTOCOL' | 'CONSENSUS' | 'COUNCIL' | 'AGENTS' | 'EXPLORER' | 'AI_TERMINAL';
 
 interface HeaderProps {
   stats: NetworkStats | null;
@@ -38,7 +38,7 @@ export function Header({ stats, currentView, onNavigate }: HeaderProps) {
             </div>
           </div>
           <nav className="hidden md:flex items-center space-x-1 text-xs font-mono">
-            {['TERMINAL', 'GENESIS', 'NEURAL', 'PROTOCOL', 'CONSENSUS', 'COUNCIL', 'AGENTS', 'EXPLORER'].map((item) => (
+            {['TERMINAL', 'GENESIS', 'NEURAL', 'PROTOCOL', 'CONSENSUS', 'COUNCIL', 'AI_TERMINAL', 'AGENTS', 'EXPLORER'].map((item) => (
               <button
                 key={item}
                 onClick={() => onNavigate(item as View)}
@@ -48,7 +48,7 @@ export function Header({ stats, currentView, onNavigate }: HeaderProps) {
                     : 'text-gray-400 hover:text-cyan-300'
                 }`}
               >
-                {item}
+                {item === 'AI_TERMINAL' ? 'AI' : item}
               </button>
             ))}
           </nav>

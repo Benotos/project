@@ -5,8 +5,9 @@ import { Hero } from './components/Hero';
 import { ProposalCard } from './components/ProposalCard';
 import { CommandInput } from './components/CommandInput';
 import { LiveCouncil } from './components/LiveCouncil';
+import { Terminal } from './components/Terminal';
 
-type View = 'TERMINAL' | 'GENESIS' | 'NEURAL' | 'PROTOCOL' | 'CONSENSUS' | 'AGENTS' | 'EXPLORER' | 'COUNCIL';
+type View = 'TERMINAL' | 'GENESIS' | 'NEURAL' | 'PROTOCOL' | 'CONSENSUS' | 'AGENTS' | 'EXPLORER' | 'COUNCIL' | 'AI_TERMINAL';
 
 function App() {
   const [stats, setStats] = useState<NetworkStats | null>(null);
@@ -14,6 +15,7 @@ function App() {
   const [commands, setCommands] = useState<Command[]>([]);
   const [currentView, setCurrentView] = useState<View>('TERMINAL');
   const [messages, setMessages] = useState<Array<{ type: 'user' | 'system'; text: string }>>([]);
+  const [terminalInput, setTerminalInput] = useState<string>('');
   const proposalsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -100,8 +102,13 @@ function App() {
       response = `NEURALCHAIN INFORMATION:\nVersion: 1.0.0\nNetwork: Mainnet\nConsensus: Neural Proof-of-Intelligence\nBlock Time: 3.2s avg\nTotal Supply: 1,000,000,000 NEURAL\nCirculating: ${(Math.random() * 500000000 + 500000000).toFixed(0)} NEURAL`;
     } else if (baseCmd.startsWith('/')) {
       response = `Command "${input}" not recognized. Type /help for available commands.`;
+      setMessages(prev => [...prev, { type: 'system', text: response }]);
     } else {
-      response = `NEURAL AI: Processing query "${input}"...\n\nI am an AI-powered blockchain assistant. I can help you explore NeuralChain, check balances, view transactions, and more. Try commands like /block, /tx, /balance, or /status for real-time information.`;
+      response = `NEURAL AI: Opening AI Terminal to process your query...`;
+      setMessages(prev => [...prev, { type: 'system', text: response }]);
+      setTerminalInput(input);
+      setCurrentView('AI_TERMINAL');
+      return;
     }
 
     setMessages(prev => [...prev, { type: 'system', text: response }]);
@@ -211,6 +218,8 @@ function App() {
         );
       case 'COUNCIL':
         return <LiveCouncil />;
+      case 'AI_TERMINAL':
+        return <Terminal initialInput={terminalInput} />;
       default:
         return (
           <>
