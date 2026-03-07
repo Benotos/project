@@ -1,4 +1,3 @@
-import { Background3D } from './components/Background3D';
 import { useEffect, useState, useRef } from 'react';
 import { supabase, NetworkStats, Proposal, Command } from './lib/supabase';
 import { Header } from './components/Header';
@@ -7,11 +6,12 @@ import { ProposalCard } from './components/ProposalCard';
 import { CommandInput } from './components/CommandInput';
 import { LiveCouncil } from './components/LiveCouncil';
 import { Terminal } from './components/Terminal';
+import { Background3D } from './components/Background3D';
+import { Twitter } from 'lucide-react'; // <-- Imported the Twitter icon
 
 type View = 'TERMINAL' | 'GENESIS' | 'NEURAL' | 'PROTOCOL' | 'CONSENSUS' | 'AGENTS' | 'EXPLORER' | 'COUNCIL' | 'AI_TERMINAL';
 
 function App() {
-  // Cache States
   const [stats, setStats] = useState<NetworkStats | null>(() => {
     const saved = localStorage.getItem('nc_stats');
     return saved ? JSON.parse(saved) : null;
@@ -31,11 +31,9 @@ function App() {
   const [commands, setCommands] = useState<Command[]>([]);
   const [terminalInput, setTerminalInput] = useState<string>('');
   
-  // NEW: Live UTC Time State
   const [currentTime, setCurrentTime] = useState<string>('');
   const proposalsRef = useRef<HTMLDivElement>(null);
 
-  // Save to Cache on Update
   useEffect(() => {
     if (stats) localStorage.setItem('nc_stats', JSON.stringify(stats));
   }, [stats]);
@@ -52,9 +50,7 @@ function App() {
     loadData();
   }, []);
 
-  // Live Blockchain & Real-Time UTC Simulation
   useEffect(() => {
-    // 1. Live Block Height and TPS updates (Every 3.2 seconds)
     const blockInterval = setInterval(() => {
       setStats(prevStats => {
         if (!prevStats) return prevStats;
@@ -70,15 +66,12 @@ function App() {
       });
     }, 3200); 
 
-    // 2. NEW: Real-Time World UTC Clock (Updates every second)
     const timeInterval = setInterval(() => {
       const now = new Date();
-      // Formats the output to strictly look like "2026-03-06 14:30:05 UTC"
       const formattedUTC = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
       setCurrentTime(formattedUTC);
     }, 1000);
 
-    // Initial time set so it doesn't wait 1 second to appear
     setCurrentTime(new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC');
 
     return () => {
@@ -190,11 +183,10 @@ function App() {
     switch (currentView) {
       case 'GENESIS':
         return (
-          <div className="max-w-4xl mx-auto px-4 pt-24 pb-48">
+          <div className="max-w-4xl mx-auto px-4 pt-24 pb-48 relative z-10">
             <h2 className="text-3xl font-bold text-cyan-400 font-mono mb-6">GENESIS BLOCK</h2>
             <div className="bg-black/40 border-2 border-cyan-500/50 rounded-lg p-6 font-mono text-sm space-y-4">
               <p className="text-gray-300">Block Height: <span className="text-cyan-400">382765873</span></p>
-              {/* FIXED: Live ticking UTC Time */}
               <p className="text-gray-300">Live Network Time: <span className="text-cyan-400">{currentTime}</span></p>
               <p className="text-gray-300">Hash: <span className="text-cyan-400 text-xs">0x000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f</span></p>
               <p className="text-gray-300">Initial Supply: <span className="text-cyan-400">1,000,000,000 NEURAL</span></p>
@@ -207,7 +199,7 @@ function App() {
         );
       case 'NEURAL':
         return (
-          <div className="max-w-4xl mx-auto px-4 pt-24 pb-48">
+          <div className="max-w-4xl mx-auto px-4 pt-24 pb-48 relative z-10">
             <h2 className="text-3xl font-bold text-cyan-400 font-mono mb-6">NEURAL AI INTERFACE</h2>
             <div className="bg-black/40 border-2 border-cyan-500/50 rounded-lg p-6 font-mono text-sm space-y-4">
               <div className="flex items-center gap-2 mb-4">
@@ -230,7 +222,7 @@ function App() {
         );
       case 'CONSENSUS':
         return (
-          <div className="max-w-4xl mx-auto px-4 pt-24 pb-48">
+          <div className="max-w-4xl mx-auto px-4 pt-24 pb-48 relative z-10">
             <h2 className="text-3xl font-bold text-cyan-400 font-mono mb-6">CONSENSUS DYNAMICS</h2>
             <div className="bg-black/40 border-2 border-cyan-500/50 rounded-lg p-6 font-mono text-sm space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -259,7 +251,7 @@ function App() {
         );
       case 'AGENTS':
         return (
-          <div className="max-w-4xl mx-auto px-4 pt-24 pb-48">
+          <div className="max-w-4xl mx-auto px-4 pt-24 pb-48 relative z-10">
             <h2 className="text-3xl font-bold text-cyan-400 font-mono mb-6">ACTIVE NEURAL AGENTS</h2>
             <div className="space-y-4">
               {['Neural Validator', 'Neural Architect', 'Neural Consensus', 'Neural Oracle'].map((agent, i) => (
@@ -278,7 +270,7 @@ function App() {
         );
       case 'EXPLORER':
         return (
-          <div className="max-w-4xl mx-auto px-4 pt-24 pb-48">
+          <div className="max-w-4xl mx-auto px-4 pt-24 pb-48 relative z-10">
             <h2 className="text-3xl font-bold text-cyan-400 font-mono mb-6">BLOCKCHAIN EXPLORER</h2>
             <div className="bg-black/40 border-2 border-cyan-500/50 rounded-lg p-6 font-mono text-sm">
               <p className="text-gray-400">Block explorer coming soon. Use commands to explore the blockchain.</p>
@@ -286,12 +278,20 @@ function App() {
           </div>
         );
       case 'COUNCIL':
-        return <LiveCouncil />;
+        return (
+          <div className="relative z-10">
+            <LiveCouncil />
+          </div>
+        );
       case 'AI_TERMINAL':
-        return <Terminal initialInput={terminalInput} />;
+        return (
+          <div className="relative z-10">
+            <Terminal initialInput={terminalInput} />
+          </div>
+        );
       default:
         return (
-          <>
+          <div className="relative z-10">
             <Hero commands={commands} onCommandClick={handleCommand} />
             <div ref={proposalsRef} className="max-w-6xl mx-auto px-4 pb-32">
               <div className="flex items-center justify-between mb-6">
@@ -316,31 +316,46 @@ function App() {
                 </div>
               )}
             </div>
-          </>
+          </div>
         );
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white relative">
       
-      {/* 3D Particle Starfield Background */}
+      {/* 3D Background */}
       <Background3D />
 
-      <Header stats={stats} currentView={currentView} onNavigate={handleNavigation} />
+      <div className="relative z-20">
+        <Header stats={stats} currentView={currentView} onNavigate={handleNavigation} />
+      </div>
 
-      <main className="relative">
+      <main className="relative z-10">
         {renderContent()}
       </main>
 
-      <CommandInput onSubmit={handleCommand} />
+      <div className="relative z-20">
+        <CommandInput onSubmit={handleCommand} />
+      </div>
 
-      <footer className="fixed bottom-20 left-0 right-0 pointer-events-none">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center">
-            <p className="text-xs font-mono text-cyan-500/50 truncate">
+      {/* NEW FOOTER WITH TWITTER & CA */}
+      <footer className="fixed bottom-8 left-0 right-0 pointer-events-none z-50">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col items-center">
+          <div className="pointer-events-auto flex items-center gap-4 bg-black/60 border border-cyan-500/30 px-5 py-2.5 rounded-full backdrop-blur-md shadow-[0_0_15px_rgba(6,182,212,0.15)]">
+            <p className="text-xs font-mono text-cyan-400 select-all">
               CA: NxH8D7vC9wJdov3qCtfr8hY8fugY0EbuyPkYAuYpump
             </p>
+            <div className="w-px h-4 bg-cyan-500/30"></div>
+            <a 
+              href="https://x.com/Neural_Chain_" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-cyan-500 hover:text-cyan-300 transition-colors flex items-center gap-2 text-xs font-mono"
+            >
+              <Twitter className="w-4 h-4" />
+              @Neural_Chain_
+            </a>
           </div>
         </div>
       </footer>
