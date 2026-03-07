@@ -7,7 +7,7 @@ import { CommandInput } from './components/CommandInput';
 import { LiveCouncil } from './components/LiveCouncil';
 import { Terminal } from './components/Terminal';
 import { Background3D } from './components/Background3D';
-import { Twitter } from 'lucide-react'; // <-- Imported the Twitter icon
+import { Twitter, Copy, Check } from 'lucide-react'; // <-- Added Copy and Check icons
 
 type View = 'TERMINAL' | 'GENESIS' | 'NEURAL' | 'PROTOCOL' | 'CONSENSUS' | 'AGENTS' | 'EXPLORER' | 'COUNCIL' | 'AI_TERMINAL';
 
@@ -33,6 +33,9 @@ function App() {
   
   const [currentTime, setCurrentTime] = useState<string>('');
   const proposalsRef = useRef<HTMLDivElement>(null);
+
+  // NEW: State to track if CA was copied
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (stats) localStorage.setItem('nc_stats', JSON.stringify(stats));
@@ -178,6 +181,13 @@ function App() {
   function scrollToProposals() {
     proposalsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+
+  // NEW: Copy to clipboard function
+  const handleCopyCA = () => {
+    navigator.clipboard.writeText('NxH8D7vC9wJdov3qCtfr8hY8fugY0EbuyPkYAuYpump');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000); // Reset icon after 2 seconds
+  };
 
   function renderContent() {
     switch (currentView) {
@@ -339,14 +349,29 @@ function App() {
         <CommandInput onSubmit={handleCommand} />
       </div>
 
-      {/* NEW FOOTER WITH TWITTER & CA */}
-      <footer className="fixed bottom-8 left-0 right-0 pointer-events-none z-50">
+      {/* FIXED: Footer pushed up to bottom-24 to avoid overlapping the input bar */}
+      <footer className="fixed bottom-24 left-0 right-0 pointer-events-none z-50">
         <div className="max-w-7xl mx-auto px-4 flex flex-col items-center">
           <div className="pointer-events-auto flex items-center gap-4 bg-black/60 border border-cyan-500/30 px-5 py-2.5 rounded-full backdrop-blur-md shadow-[0_0_15px_rgba(6,182,212,0.15)]">
-            <p className="text-xs font-mono text-cyan-400 select-all">
-              CA: NxH8D7vC9wJdov3qCtfr8hY8fugY0EbuyPkYAuYpump
-            </p>
+            
+            {/* Click to Copy CA Button */}
+            <button 
+              onClick={handleCopyCA}
+              className="flex items-center gap-2 group transition-colors"
+              title="Click to copy CA"
+            >
+              <span className="text-xs font-mono text-cyan-400 group-hover:text-cyan-300">
+                CA: <span className="font-bold select-all">NxH8D7vC9wJdov3qCtfr8hY8fugY0EbuyPkYAuYpump</span>
+              </span>
+              {copied ? (
+                <Check className="w-4 h-4 text-green-400" />
+              ) : (
+                <Copy className="w-4 h-4 text-cyan-500 opacity-60 group-hover:opacity-100 transition-opacity" />
+              )}
+            </button>
+
             <div className="w-px h-4 bg-cyan-500/30"></div>
+            
             <a 
               href="https://x.com/Neural_Chain_" 
               target="_blank" 
