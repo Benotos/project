@@ -184,7 +184,7 @@ function App() {
 
   // NEW: Copy to clipboard function
   const handleCopyCA = () => {
-    navigator.clipboard.writeText('NxH8D7vC9wJdov3qCtfr8hY8fugY0EbuyPkYAuYpump');
+    navigator.clipboard.writeText('FR3YXdx3S3aeCyvNSMTpUzdnGWL5DVB4u7Yn51opump');
     setCopied(true);
     setTimeout(() => setCopied(false), 2000); // Reset icon after 2 seconds
   };
