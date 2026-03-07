@@ -1,3 +1,4 @@
+import { Background3D } from './components/Background3D';
 import { useEffect, useState, useRef } from 'react';
 import { supabase, NetworkStats, Proposal, Command } from './lib/supabase';
 import { Header } from './components/Header';
@@ -322,13 +323,9 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
-      <div
-        className="fixed inset-0 opacity-10 pointer-events-none"
-        style={{
-          backgroundImage: 'radial-gradient(circle at 2px 2px, cyan 1px, transparent 0)',
-          backgroundSize: '40px 40px'
-        }}
-      />
+      
+      {/* 3D Particle Starfield Background */}
+      <Background3D />
 
       <Header stats={stats} currentView={currentView} onNavigate={handleNavigation} />
 
