@@ -361,7 +361,7 @@ function App() {
               title="Click to copy CA"
             >
               <span className="text-xs font-mono text-cyan-400 group-hover:text-cyan-300">
-                CA: <span className="font-bold select-all">NxH8D7vC9wJdov3qCtfr8hY8fugY0EbuyPkYAuYpump</span>
+                CA: <span className="font-bold select-all">FR3YXdx3S3aeCyvNSMTpUzdnGWL5DVB4u7Yn51opump</span>
               </span>
               {copied ? (
                 <Check className="w-4 h-4 text-green-400" />
